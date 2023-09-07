@@ -1,0 +1,60 @@
+from datetime import date, timedelta
+
+import program_import
+
+import requests, json
+
+
+user_input = input("Hello, welcome to the forecast app. Input 'ok' if you want to check the today forecast or 'select' if you want to check a date: ")
+
+if user_input == 'ok':
+
+    time_today = date.today()
+
+    time_data = time_today + timedelta(days=1)
+
+elif user_input == 'select':
+
+    time_data = input("Input a date with this format 'YYYY-MM-DD' in order to check precipitation in London: ")
+
+    print(f"Datetime selected: {time_data}")
+else:
+    print("Wrong input.")
+
+with open('log.txt') as f:
+    for line in f:
+        if time_data in line:
+            print(line)
+            break
+        else:
+            print("No previous query results found. Loading information...")
+        
+            API_URL = f'https://api.open-meteo.com/v1/forecast?latitude=51.5085&longitude=-0.1257&daily=precipitation_sum&timezone=Europe%2FLondon&start_date={time_data}&end_date={time_data}'
+
+            url = API_URL
+
+            response = requests.get(url)
+
+            if response.status_code == 200:
+
+                data = response.json()
+
+                print(data)
+
+                program_import.save_data(data)
+
+                precipitation = data['daily']['precipitation_sum'][0]
+
+                print(precipitation)
+
+                if precipitation > 0.0:
+                    print("it will rain :(")
+
+                elif precipitation == 0.0:
+                    print("it will not rain :)")
+
+                else:
+                    print("I don't know.")
+
+            else:
+                print("Error in the HTTP request")
